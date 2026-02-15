@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamHub - Your Complete Exam Guide</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .auth-container {
+            max-width: 450px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .auth-title {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .auth-subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .success-message {
+            background: #f0fdf4;
+            color: #16a34a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #6b7280;
+        }
+        
+        .auth-switch a {
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7280;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .state-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .state-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .state-card:hover, .state-card.selected {
+            border-color: #667eea;
+            background: #f5f3ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .state-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        
+        .state-count {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .exam-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .exam-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .exam-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .exam-type {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .exam-details {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 100%;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .close-btn {
+            background: #f3f4f6;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .detail-section {
+            margin-bottom: 25px;
+        }
+        
+        .detail-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        
+        .detail-content {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        
+        .resource-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .resource-item {
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .link-btn {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        
+        .link-btn:hover {
+            background: #5568d3;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .exam-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .state-card {
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Firebase Configuration
+        // REPLACE WITH YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Exam Data
+        const examData = {
+            tamilnadu: [
+                {
+                    id: 'tn1',
+                    name: 'TNPSC Group 1',
+                    type: 'State Service',
+                    eligibility: 'Graduate in any discipline, Age: 21-32 years',
+                    description: 'Tamil Nadu Public Service Commission Group 1 examination for various administrative posts',
+                    syllabus: 'General Studies, Aptitude & Mental Ability, Tamil/English',
+                    importantDates: 'Notification: Usually in May, Exam: October-November',
+                    studyMaterials: ['TNPSC Official Material', 'Previous Year Papers (2019-2024)', 'General Studies Books'],
+                    colleges: ['N/A - Direct Government Recruitment'],
+                    coachingCenters: ['Shankar IAS Academy, Chennai', 'RACE Institute, Chennai', 'Bharathi Academy, Chennai']
+                },
+                {
+                    id: 'tn2',
+                    name: 'TNEA (Engineering Admissions)',
+                    type: 'Engineering Entrance',
+                    eligibility: '12th pass with Physics, Chemistry, Maths. Minimum 50% aggregate',
+                    description: 'Tamil Nadu Engineering Admissions - State counselling for engineering colleges',
+                    syllabus: 'Based on 12th standard PCM syllabus',
+                    importantDates: 'Application: May-June, Counselling: July-August',
+                    studyMaterials: ['12th Standard Textbooks', 'TNEA Guide Books', 'Previous Rank Lists'],
+                    colleges: ['Anna University', 'PSG Tech Coimbatore', 'Thiagarajar College of Engineering', 'MIT Chennai'],
+                    coachingCenters: ['FIITJEE Chennai', 'Sri Chaitanya', 'Resonance Chennai']
+                },
+                {
+                    id: 'tn3',
+                    name: 'TANCET',
+                    type: 'Postgraduate Entrance',
+                    eligibility: 'Graduate degree for MBA/MCA/ME/MTech programs',
+                    description: 'Tamil Nadu Common Entrance Test for postgraduate admissions',
+                    syllabus: 'Aptitude, Logical Reasoning, Subject-specific questions',
+                    importantDates: 'Application: February-March, Exam: March-April',
+                    studyMaterials: ['TANCET Preparation Books', 'Previous Year Papers', 'Subject-wise Guides'],
+                    colleges: ['Anna University', 'Madras Christian College', 'Loyola College', 'PSG College'],
+                    coachingCenters: ['TIME Chennai', 'IMS Chennai', 'Career Launcher Chennai']
+                }
+            ],
+            kerala: [
+                {
+                    id: 'kl1',
+                    name: 'KEAM',
+                    type: 'Engineering/Medical Entrance',
+                    eligibility: '12th pass with PCM/PCB. Minimum 50% aggregate',
+                    description: 'Kerala Engineering Architecture Medical entrance examination',
+                    syllabus: 'Physics, Chemistry, Mathematics/Biology - 12th & 11th level',
+                    importantDates: 'Application: March, Exam: May',
+                    studyMaterials: ['KEAM Previous Papers', 'NCERT Books', 'Kerala State Board Textbooks'],
+                    colleges: ['NIT Calicut', 'Govt Engineering Colleges', 'Medical Colleges Kerala'],
+                    coachingCenters: ['Brilliant Study Centre', 'Sree Narayana Coaching', 'BASE Educational Services']
+                },
+                {
+                    id: 'kl2',
+                    name: 'Kerala PSC Exams',
+                    type: 'State Service',
+                    eligibility: 'Varies by post - typically 12th/Graduate. Age: 18-36 years',
+                    description: 'Kerala Public Service Commission conducts exams for various government posts',
+                    syllabus: 'General Knowledge, Current Affairs, Kerala History, Basic Mathematics',
+                    importantDates: 'Various notifications throughout the year',
+                    studyMaterials: ['Kerala PSC Renaissance', 'Current Affairs Monthly', 'Previous Year Papers'],
+                    colleges: ['N/A - Direct Government Recruitment'],
+                    coachingCenters: ['Winners Institute Trivandrum', 'Time Institute Kerala', 'Aakash Institute Kochi']
+                },
+                {
+                    id: 'kl3',
+                    name: 'Kerala CEE',
+                    type: 'Medical/Dental Entrance',
+                    eligibility: '12th with PCB, Minimum 50% in each subject',
+                    description: 'Common Entrance Examination for medical and dental courses',
+                    syllabus: 'Physics, Chemistry, Biology (NCERT + State Board)',
+                    importantDates: 'Application: March-April, Exam: May',
+                    studyMaterials: ['NEET Preparation Books', 'Previous CEE Papers', 'Biology Reference Books'],
+                    colleges: ['Govt Medical Colleges', 'Dental Colleges Kerala'],
+                    coachingCenters: ['Aakash BYJU\'S', 'Allen Career Institute', 'NEET Academy Kerala']
+                }
+            ],
+            karnataka: [
+                {
+                    id: 'ka1',
+                    name: 'KCET',
+                    type: 'Engineering/Medical Entrance',
+                    eligibility: '12th pass with PCM/PCB. Minimum 45% aggregate',
+                    description: 'Karnataka Common Entrance Test for professional courses',
+                    syllabus: 'Physics, Chemistry, Mathematics/Biology - 11th & 12th',
+                    importantDates: 'Application: March, Exam: April-May',
+                    studyMaterials: ['KCET Question Banks', 'PUC Textbooks', 'Previous Year Papers'],
+                    colleges: ['RVCE Bangalore', 'BMS College', 'PES University', 'MSRIT'],
+                    coachingCenters: ['BASE Bangalore', 'FIITJEE Bangalore', 'Sri Chaitanya']
+                },
+                {
+                    id: 'ka2',
+                    name: 'KPSC KAS',
+                    type: 'State Service',
+                    eligibility: 'Graduate degree, Age: 21-35 years',
+                    description: 'Karnataka Administrative Service examination',
+                    syllabus: 'General Studies, Aptitude, Karnataka History & Culture',
+                    importantDates: 'Notification: Usually in August, Exam: December-January',
+                    studyMaterials: ['KPSC Guides', 'Current Affairs', 'Karnataka State Manual'],
+                    colleges: ['N/A - Direct Government Recruitment'],
+                    coachingCenters: ['Chanakya IAS Academy Bangalore', 'ALS IAS Bangalore', 'Preetham IAS']
+                },
+                {
+                    id: 'ka3',
+                    name: 'PGCET',
+                    type: 'Postgraduate Entrance',
+                    eligibility: 'Bachelor\'s degree in relevant field',
+                    description: 'Post Graduate Common Entrance Test for MBA/MCA/MTech',
+                    syllabus: 'Subject-specific + Aptitude',
+                    importantDates: 'Application: June, Exam: July',
+                    studyMaterials: ['PGCET Preparation Books', 'Previous Papers', 'Subject Guides'],
+                    colleges: ['Bangalore University', 'Mysore University', 'Mangalore University'],
+                    coachingCenters: ['TIME Bangalore', 'IMS Bangalore', 'Career Forum']
+                },
+                {
+                    id: 'ka4',
+                    name: 'COMEDK',
+                    type: 'Engineering Entrance',
+                    eligibility: '12th with PCM, Minimum 45% aggregate',
+                    description: 'Consortium of Medical, Engineering and Dental Colleges of Karnataka',
+                    syllabus: 'Physics, Chemistry, Mathematics - NCERT based',
+                    importantDates: 'Application: March, Exam: May',
+                    studyMaterials: ['COMEDK Previous Papers', 'NCERT Books', 'Reference Books'],
+                    colleges: ['RVCE', 'PESIT', 'BMS College', 'MSRIT'],
+                    coachingCenters: ['FIITJEE', 'Resonance', 'Sri Chaitanya']
+                }
+            ]
+        };
+
+        // Authentication Component
+        function AuthForm() {
+            const [isLogin, setIsLogin] = useState(true);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [name, setName] = useState('');
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError('');
+                setSuccess('');
+                setLoading(true);
+
+                try {
+                    if (isLogin) {
+                        await auth.signInWithEmailAndPassword(email, password);
+                        setSuccess('Login successful!');
+                    } else {
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        await userCredential.user.updateProfile({ displayName: name });
+                        
+                        // Store user data in Firestore
+                        await db.collection('users').doc(userCredential.user.uid).set({
+                            name: name,
+                            email: email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        setSuccess('Registration successful!');
+                    }
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="auth-container">
+                    <h1 className="auth-title">{isLogin ? 'Welcome Back' : 'Create Account'}</h1>
+                    <p className="auth-subtitle">
+                        {isLogin ? 'Login to access exam resources' : 'Join to explore exam information'}
+                    </p>
+
+                    {error && <div className="error-message">{error}</div>}
+                    {success && <div className="success-message">{success}</div>}
+
+                    <form onSubmit={handleSubmit}>
+                        {!isLogin && (
+                            <div className="form-group">
+                                <label className="form-label">Full Name</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        )}
+
+                        <div className="form-group">
+                            <label className="form-label">Email</label>
+                            <input
+                                type="email"
+                                className="form-input"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Password</label>
+                            <input
+                                type="password"
+                                className="form-input"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <button type="submit" className="btn btn-primary" style={{width: '100%'}} disabled={loading}>
+                            {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
+                        </button>
+                    </form>
+
+                    <div className="auth-switch">
+                        {isLogin ? "Don't have an account? " : "Already have an account? "}
+                        <a onClick={() => setIsLogin(!isLogin)}>
+                            {isLogin ? 'Register' : 'Login'}
+                        </a>
+                    </div>
+                </div>
+            );
+        }
+
+        // Exam Detail Modal
+        function ExamModal({ exam, onClose }) {
+            if (!exam) return null;
+
+            return (
+                <div className="modal" onClick={onClose}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">{exam.name}</h2>
+                            <button className="close-btn" onClick={onClose}>×</button>
+                        </div>
+
+                        <div className="detail-section">
+                            <span className="exam-type">{exam.type}</span>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Description</h3>
+                            <p className="detail-content">{exam.description}</p>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Eligibility</h3>
+                            <p className="detail-content">{exam.eligibility}</p>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Syllabus</h3>
+                            <p className="detail-content">{exam.syllabus}</p>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Important Dates</h3>
+                            <p className="detail-content">{exam.importantDates}</p>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Study Materials</h3>
+                            <ul className="resource-list">
+                                {exam.studyMaterials.map((material, idx) => (
+                                    <li key={idx} className="resource-item">
+                                        <span>{material}</span>
+                                        <button className="link-btn">Download</button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Top Colleges/Universities</h3>
+                            <ul className="resource-list">
+                                {exam.colleges.map((college, idx) => (
+                                    <li key={idx} className="resource-item">
+                                        <span>{college}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="detail-section">
+                            <h3 className="detail-title">Coaching Centers</h3>
+                            <ul className="resource-list">
+                                {exam.coachingCenters.map((center, idx) => (
+                                    <li key={idx} className="resource-item">
+                                        <span>{center}</span>
+                                        <button className="link-btn">Visit</button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [user, setUser] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [selectedState, setSelectedState] = useState('tamilnadu');
+            const [selectedExam, setSelectedExam] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+
+            useEffect(() => {
+                const unsubscribe = auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        // Update last login in Firestore
+                        try {
+                            await db.collection('users').doc(user.uid).update({
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } catch (err) {
+                            console.error('Error updating login time:', err);
+                        }
+                    }
+                    setUser(user);
+                    setLoading(false);
+                });
+
+                return () => unsubscribe();
+            }, []);
+
+            const handleLogout = async () => {
+                try {
+                    await auth.signOut();
+                } catch (err) {
+                    console.error('Logout error:', err);
+                }
+            };
+
+            const filteredExams = examData[selectedState].filter(exam =>
+                exam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                exam.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                exam.description.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            if (loading) {
+                return (
+                    <div className="container" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+                        <h2>Loading...</h2>
+                    </div>
+                );
+            }
+
+            if (!user) {
+                return <AuthForm />;
+            }
+
+            return (
+                <div className="container">
+                    <header className="header">
+                        <div className="logo">📚 ExamHub</div>
+                        <div className="user-info">
+                            <span>Welcome, {user.displayName || user.email}!</span>
+                            <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
+                        </div>
+                    </header>
+
+                    <main className="main-content">
+                        <h2 style={{marginBottom: '20px', color: '#1f2937'}}>Explore Competitive Exams</h2>
+                        
+                        <input
+                            type="text"
+                            className="search-box"
+                            placeholder="Search exams by name, type, or description..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+
+                        <div className="state-selector">
+                            <div 
+                                className={`state-card ${selectedState === 'tamilnadu' ? 'selected' : ''}`}
+                                onClick={() => setSelectedState('tamilnadu')}
+                            >
+                                <div className="state-name">Tamil Nadu</div>
+                                <div className="state-count">{examData.tamilnadu.length} Exams</div>
+                            </div>
+                            <div 
+                                className={`state-card ${selectedState === 'kerala' ? 'selected' : ''}`}
+                                onClick={() => setSelectedState('kerala')}
+                            >
+                                <div className="state-name">Kerala</div>
+                                <div className="state-count">{examData.kerala.length} Exams</div>
+                            </div>
+                            <div 
+                                className={`state-card ${selectedState === 'karnataka' ? 'selected' : ''}`}
+                                onClick={() => setSelectedState('karnataka')}
+                            >
+                                <div className="state-name">Karnataka</div>
+                                <div className="state-count">{examData.karnataka.length} Exams</div>
+                            </div>
+                        </div>
+
+                        {filteredExams.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-state-icon">🔍</div>
+                                <h3>No exams found</h3>
+                                <p>Try adjusting your search query</p>
+                            </div>
+                        ) : (
+                            <div className="exam-grid">
+                                {filteredExams.map((exam) => (
+                                    <div 
+                                        key={exam.id} 
+                                        className="exam-card"
+                                        onClick={() => setSelectedExam(exam)}
+                                    >
+                                        <h3 className="exam-name">{exam.name}</h3>
+                                        <span className="exam-type">{exam.type}</span>
+                                        <div className="exam-details">
+                                            <p><strong>Eligibility:</strong> {exam.eligibility}</p>
+                                            <p style={{marginTop: '10px'}}>{exam.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+
+                    {selectedExam && (
+                        <ExamModal 
+                            exam={selectedExam} 
+                            onClose={() => setSelectedExam(null)} 
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // Render App
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
